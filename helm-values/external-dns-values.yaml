@@ -52,8 +52,9 @@ resources:
     cpu: 200m
     memory: 128Mi
 
+# See cert-manager-values.yaml comment — flip true after kube-prom-stack lands.
 serviceMonitor:
-  enabled: true
+  enabled: false
 
 interval: 1m
 logLevel: info

@@ -7,11 +7,14 @@
 
 installCRDs: true
 
-# Enable Prometheus metrics (kube-prometheus-stack will scrape these later)
+# Prometheus metrics: scrape endpoint exposed, but no ServiceMonitor at install
+# time (kube-prometheus-stack — which provides the CRD — is installed later).
+# Argo CD will flip servicemonitor.enabled=true once kube-prom-stack is up via
+# a future values bump, OR you can apply a ServiceMonitor manifest by hand.
 prometheus:
   enabled: true
   servicemonitor:
-    enabled: true
+    enabled: false
 
 serviceAccount:
   create: true
