@@ -171,11 +171,16 @@ kubectl -n istio-system get certificate reon-buzz-wildcard
 
 ## Step 4 — Argo CD
 
-### 4.1 Create + label the namespace (mesh-injected — Argo's own pods get sidecars)
+### 4.1 Create the namespace
+
+Don't enable Istio injection on `argocd`. Argo CD ships a pre-install Helm hook
+Job (`argocd-redis-secret-init`) — if it gets an Istio sidecar, the main
+container exits but `istio-proxy` keeps running, so the Job never reaches
+`Completed` and `helm install --wait` times out. Argo CD doesn't need mesh
+mTLS for its own components anyway (it talks to the K8s API and to Git).
 
 ```sh
 kubectl create namespace argocd
-kubectl label namespace argocd istio-injection=enabled --overwrite
 ```
 
 ### 4.2 Install
@@ -340,6 +345,7 @@ If the projected token file is missing, the chart's `podLabels.azure.workload.id
 | Argo CD Application stuck `OutOfSync` with `manifest generation failed` | Helm chart version no longer exists on chart repo | Check `argocd/apps/<name>.yaml` `targetRevision`; bump to a current version. |
 | Gatekeeper rejects pod with `disallowed image registry` | New component's registry not in allowlist | Edit `policies/gatekeeper/constraints/allowed-registries-cluster.yaml`, add registry, push. Argo will sync. |
 | Grafana login fails with bad credentials | `grafana-admin` Secret didn't sync from KV | `kubectl -n observability get externalsecret grafana-admin -o yaml` — look at status. Most likely: ESO MI federated credential subject doesn't match the actual SA. |
+| `helm install argocd` errors with `failed pre-install: timed out waiting for the condition`, and `argocd-redis-secret-init` Job pod is `1/2 NotReady` | Argo CD's pre-install Job has an Istio sidecar injected. The main `secret-init` container exits, but `istio-proxy` keeps running, so the Job never reports Completed. Helm gives up at the timeout. | Don't enable `istio-injection=enabled` on the `argocd` namespace. Recover: `kubectl label ns argocd istio-injection-` to remove the label, then `kubectl -n argocd delete job argocd-redis-secret-init`, then re-run `helm install`. |
 
 ---
 
