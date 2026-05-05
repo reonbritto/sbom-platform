@@ -18,7 +18,7 @@ jobs:
         overlay:
           - apps/sbom-app/overlays/dev
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install kustomize
         run: |
@@ -46,7 +46,7 @@ jobs:
 
       - name: Upload rendered artefact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rendered-${{ strategy.job-index }}
           path: rendered.yaml
@@ -55,7 +55,7 @@ jobs:
     name: validate ArgoCD Applications
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install kubeconform
         run: |
           curl -sLo kubeconform.tar.gz \
@@ -76,7 +76,7 @@ jobs:
     name: validate infra-manifests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install kubeconform
         run: |
           curl -sLo kubeconform.tar.gz \
