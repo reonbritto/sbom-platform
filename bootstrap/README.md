@@ -46,6 +46,8 @@ Expect: `"...has been added to your repositories"` per repo, then `Update Comple
 
 ## Step 2 — cert-manager
 
+> **Note on ServiceMonitor.** cert-manager (and later ESO + ExternalDNS) can emit a `ServiceMonitor` for Prometheus scraping. That CRD is owned by kube-prometheus-stack, which installs later in step 5. To avoid a chicken-and-egg `no matches for kind "ServiceMonitor"` error on these early `helm install`s, the values files in this repo ship with `serviceMonitor.enabled: false`. After kube-prom-stack syncs in step 5, you can flip those back to `true` and `helm upgrade` to start scraping.
+
 ### 2.1 Install the chart
 
 Run from the repo root:
@@ -316,6 +318,7 @@ If the projected token file is missing, the chart's `podLabels.azure.workload.id
 
 | Symptom | Most likely cause | First check |
 |---|---|---|
+| `helm install` errors with `no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"` | The chart's values try to create a ServiceMonitor before the kube-prometheus-stack CRDs exist | Set `serviceMonitor.enabled: false` (or `prometheus.servicemonitor.enabled: false` for cert-manager) in that chart's values file. Re-enable later, after kube-prom-stack syncs in step 5. cert-manager / ESO / ExternalDNS already pre-disabled in this repo for that reason. |
 | `cert-manager` Certificate stuck `Ready=False` >5 min | DNS-01 challenge can't auth to Azure DNS | `kubectl -n cert-manager logs -l app=cert-manager` — look for `AADSTS` errors. Verify external_dns MI has DNS Zone Contributor on `reon.buzz`. |
 | Loki/Tempo/Mimir Pod `CrashLoopBackOff` with `unauthorized` from blob | WI token not mounted | `kubectl exec ... -- env | grep AZURE_` — should show client+tenant ID. If empty, pod label `azure.workload.identity/use: "true"` is missing. |
 | `argocd.reon.buzz` returns connection refused | DNS not propagated, or LB external IP not assigned | `kubectl -n istio-system get svc istio-ingressgateway` — check EXTERNAL-IP. `nslookup argocd.reon.buzz`. |
