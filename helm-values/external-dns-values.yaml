@@ -22,11 +22,22 @@ registry: txt
 txtOwnerId: aks-sbom
 txtPrefix: extdns-
 
-azure:
-  tenantId: "d1d16433-e375-4076-a7ea-c57bb79df0de"
-  subscriptionId: "dfed6615-05cd-434d-b0e0-7dea9e050738"
-  resourceGroup: sa
-  useWorkloadIdentityExtension: true
+# ExternalDNS reads /etc/kubernetes/azure.json on startup to know which Azure
+# tenant/subscription/RG to talk to. The chart mounts this file when
+# secretConfiguration.enabled=true and writes it from the data block below.
+# Without this, the pod CrashLoops with "open /etc/kubernetes/azure.json: no
+# such file or directory".
+secretConfiguration:
+  enabled: true
+  mountPath: /etc/kubernetes
+  data:
+    azure.json: |
+      {
+        "tenantId": "d1d16433-e375-4076-a7ea-c57bb79df0de",
+        "subscriptionId": "dfed6615-05cd-434d-b0e0-7dea9e050738",
+        "resourceGroup": "sa",
+        "useWorkloadIdentityExtension": true
+      }
 
 serviceAccount:
   create: true
