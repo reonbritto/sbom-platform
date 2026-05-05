@@ -417,7 +417,7 @@ az storage blob list --account-name "$SA" --container-name loki --auth-mode logi
 | Argo CD Application stuck `OutOfSync` with `manifest generation failed` | Helm chart version no longer exists on chart repo | Bump `targetRevision` in `argocd/apps/<name>.yaml`. |
 | Gatekeeper rejects pod with `disallowed image registry` | New component's registry not in allowlist | Edit `policies/gatekeeper/constraints/allowed-registries-cluster.yaml`, add registry, push. Argo syncs. |
 | Grafana login fails with bad credentials | `grafana-admin` Secret didn't sync from KV | `kubectl -n observability get externalsecret grafana-admin -o yaml` — look at status. |
-| Argo CD UI shows `RBAC: access denied` after successful login | `configs.rbac.policy.default: ""` was set without a working group mapping — the local `admin` user falls under the empty default, not under any `g, admin, role:admin` group binding. | Remove the custom `rbac` block (or that one line) from `helm-values/argocd-values.yaml`; default behavior re-enables admin's superuser status. `helm upgrade --install argocd ...` to apply. |
+| Argo CD UI shows `RBAC: access denied` after successful login | The Argo CD chart writes `policy.default: ""` into `argocd-rbac-cm` regardless of whether you set the `rbac:` block. With no default policy and no matching group binding, the local `admin` user has no permissions. | In `helm-values/argocd-values.yaml`, set `configs.rbac.policy.default: role:admin` explicitly (or `role:readonly` + a `g, admin, role:admin` CSV binding for tighter control). `helm upgrade --install argocd ...` then `kubectl -n argocd rollout restart deploy/argocd-server`. |
 
 ---
 

@@ -15,11 +15,13 @@ configs:
     statusbadge.enabled: "true"
     timeout.reconciliation: 60s
 
-  # No custom rbac block. Argo's built-in `admin` local user is unconditionally
-  # cluster-admin out of the box. Add `policy.csv` only when you wire up SSO
-  # and need to grant roles to OIDC groups — setting `policy.default: ""` here
-  # without a working group mapping locks YOU out (the local admin user falls
-  # under the empty default, not under any `g, ...` group binding).
+  rbac:
+    # Single-user dev cluster: any authenticated principal gets admin.
+    # The Argo CD chart hardcodes `policy.default: ""` in the rendered
+    # ConfigMap unless we override it here, which locks the local admin
+    # user out of the UI with `RBAC: access denied`. Tighten after SSO
+    # is wired and you can grant roles to specific groups.
+    policy.default: role:admin
 
 server:
   replicas: 1
