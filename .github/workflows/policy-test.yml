@@ -1,0 +1,53 @@
+name: Gatekeeper Policy Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gator-test:
+    name: gator test (Gatekeeper)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gator
+        run: |
+          curl -sLo gator.tar.gz \
+            "https://github.com/open-policy-agent/gatekeeper/releases/download/v3.17.1/gator-v3.17.1-linux-amd64.tar.gz"
+          tar xzf gator.tar.gz
+          sudo install -m 0755 gator /usr/local/bin/
+
+      - name: Install kustomize
+        run: |
+          curl -sLo kustomize.tar.gz \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+          tar xzf kustomize.tar.gz
+          sudo install -m 0755 kustomize /usr/local/bin/
+
+      - name: Render dev overlay
+        run: kustomize build apps/sbom-app/overlays/dev > /tmp/dev.yaml
+
+      - name: Render prod overlay
+        run: kustomize build apps/sbom-app/overlays/prod > /tmp/prod.yaml
+
+      - name: Test policies against dev render
+        run: |
+          gator test \
+            --filename policies/gatekeeper/templates \
+            --filename policies/gatekeeper/constraints \
+            --filename /tmp/dev.yaml \
+            --output table
+
+      - name: Test policies against prod render
+        run: |
+          gator test \
+            --filename policies/gatekeeper/templates \
+            --filename policies/gatekeeper/constraints \
+            --filename /tmp/prod.yaml \
+            --output table

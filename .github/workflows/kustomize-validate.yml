@@ -1,0 +1,95 @@
+name: Kustomize Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: kustomize build + kubeconform
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        overlay:
+          - apps/sbom-app/overlays/dev
+          - apps/sbom-app/overlays/prod
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install kustomize
+        run: |
+          curl -sLo kustomize.tar.gz \
+            "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz"
+          tar xzf kustomize.tar.gz
+          sudo install -m 0755 kustomize /usr/local/bin/
+
+      - name: Install kubeconform
+        run: |
+          curl -sLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz"
+          tar xzf kubeconform.tar.gz
+          sudo install -m 0755 kubeconform /usr/local/bin/
+
+      - name: kustomize build
+        run: kustomize build "${{ matrix.overlay }}" > rendered.yaml
+
+      - name: kubeconform (with CRD schemas)
+        run: |
+          kubeconform -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml
+
+      - name: Upload rendered artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-${{ strategy.job-index }}
+          path: rendered.yaml
+
+  validate-argocd:
+    name: validate ArgoCD Applications
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz"
+          tar xzf kubeconform.tar.gz
+          sudo install -m 0755 kubeconform /usr/local/bin/
+      - name: kubeconform argocd CRDs
+        run: |
+          for f in argocd/argocd-apps.yaml argocd/apps/*.yaml; do
+            echo "=== $f ==="
+            kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              "$f"
+          done
+
+  validate-infra:
+    name: validate infra-manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kubeconform
+        run: |
+          curl -sLo kubeconform.tar.gz \
+            "https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz"
+          tar xzf kubeconform.tar.gz
+          sudo install -m 0755 kubeconform /usr/local/bin/
+      - name: kubeconform on infra-manifests/
+        run: |
+          for f in infra-manifests/*.yaml; do
+            echo "=== $f ==="
+            kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+              "$f"
+          done

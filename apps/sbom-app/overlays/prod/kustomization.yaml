@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sbom
+
+commonAnnotations:
+  app.sbom/environment: prod
+
+resources:
+  - ../../base
+
+patches:
+  - path: replicas-patch.yaml
+    target: { kind: Deployment, name: sbom-app }
+  - path: pdb-patch.yaml
+    target: { kind: PodDisruptionBudget, name: sbom-app }
+  - path: hpa-patch.yaml
+    target: { kind: HorizontalPodAutoscaler, name: sbom-app }
+  - path: httproute-patch.yaml
+    target: { kind: HTTPRoute, name: sbom-app }
+  - path: env-patch.yaml
+    target: { kind: Deployment, name: sbom-app }
+  - path: cronjob-env-patch.yaml
+    target: { kind: CronJob, name: kev-rescan }
+  - path: serviceaccount-patch.yaml
+    target: { kind: ServiceAccount, name: sbom-app }
+  - path: secretproviderclass-patch.yaml
+    target: { kind: SecretProviderClass, name: sbom-app-kv }
+
+images:
+  - name: sbom-app
+    newName: acrsbom.azurecr.io/sbom-vuln-analyzer
+    newTag: bootstrap
+  - name: kev-rescan
+    newName: acrsbom.azurecr.io/kev-rescan
+    newTag: bootstrap

@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sbom-app-prod
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: "deployments-prod"
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: "alerts-prod"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/reon/sbom-platform.git
+    targetRevision: main
+    path: apps/sbom-app/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sbom
+  # PROD: manual sync only — Harness drives the digest update + we audit before reconciling
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  revisionHistoryLimit: 20

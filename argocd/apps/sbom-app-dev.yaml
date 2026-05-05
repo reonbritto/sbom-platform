@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sbom-app-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: "deployments-dev"
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: "alerts-dev"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/reon/sbom-platform.git
+    targetRevision: main
+    path: apps/sbom-app/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sbom
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10

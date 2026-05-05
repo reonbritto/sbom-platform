@@ -1,0 +1,15 @@
+# Default: solo owner
+* @reon
+
+# Image digest mutations only — bypass list for harness-bot configured in branch ruleset
+# Humans still need approval here, harness-bot does not
+/apps/sbom-app/overlays/dev/kustomization.yaml   @reon
+/apps/sbom-app/overlays/prod/kustomization.yaml  @reon
+
+# Security-sensitive
+/policies/gatekeeper/   @reon
+
+# When a team forms, switch to:
+# /apps/                  @reon @app-team
+# /argocd/                @reon @platform-team
+# /policies/              @reon @platform-team @security-team

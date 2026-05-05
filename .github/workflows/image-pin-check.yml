@@ -1,0 +1,48 @@
+name: Image Pin Check
+
+# Fail PRs that introduce :latest or float tags in overlays.
+# Allow `bootstrap` placeholder; everything else must be either a digest (@sha256:...) or vX.Y.Z.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/**/overlays/**/kustomization.yaml"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: enforce digest / version pinning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan changed kustomization files
+        run: |
+          set -euo pipefail
+          changed=$(git diff --name-only origin/main...HEAD -- 'apps/**/overlays/**/kustomization.yaml')
+          [ -z "$changed" ] && { echo "no overlay changes"; exit 0; }
+          fail=0
+          for f in $changed; do
+            echo "=== $f ==="
+            # extract newTag values
+            tags=$(awk '/newTag:/{print $2}' "$f")
+            for t in $tags; do
+              t_unquoted=$(echo "$t" | tr -d '"')
+              if [[ "$t_unquoted" == "latest" ]]; then
+                echo "::error file=$f::newTag '$t_unquoted' is forbidden"
+                fail=1
+              elif [[ "$t_unquoted" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "ok: $t_unquoted (release tag)"
+              elif [[ "$t_unquoted" =~ ^sha-[0-9a-f]{7,40}$ ]]; then
+                echo "ok: $t_unquoted (sha tag)"
+              elif [[ "$t_unquoted" == "bootstrap" ]]; then
+                echo "ok: $t_unquoted (bootstrap placeholder)"
+              else
+                echo "::error file=$f::newTag '$t_unquoted' is not a digest, version, or bootstrap"
+                fail=1
+              fi
+            done
+          done
+          exit $fail

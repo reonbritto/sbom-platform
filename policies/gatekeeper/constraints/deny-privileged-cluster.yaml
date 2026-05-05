@@ -1,0 +1,19 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDenyPrivileged
+metadata:
+  name: deny-privileged-cluster-wide
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      # System namespaces that legitimately need privileged or root
+      - kube-system
+      - gatekeeper-system
+      - cert-manager
+      - secrets-store-csi-driver
+      - azure-workload-identity-system
+      - istio-system
+      - envoy-gateway-system

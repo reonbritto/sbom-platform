@@ -1,0 +1,7 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sbom-app
+spec:
+  # dev runs single replica, no PDB constraint useful
+  minAvailable: 0

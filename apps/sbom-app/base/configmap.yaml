@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sbom-app-config
+data:
+  NODE_ENV: production
+  CACHE_TTL_SECONDS: "3600"
+  VULN_CACHE_TTL_SECONDS: "86400"
+  OSV_CONCURRENCY: "10"
+  MAX_SBOM_BYTES: "10485760"
+  MAX_COMPONENTS: "10000"

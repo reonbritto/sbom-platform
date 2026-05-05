@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sbom-app-default-deny
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sbom-app-allow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: sbom-app
+  policyTypes: [Ingress, Egress]
+  ingress:
+    # gateway → app
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+      ports:
+        - { protocol: TCP, port: 3000 }
+    # in-mesh sidecars
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+    # metrics scrape
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: openobserve
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - { protocol: TCP, port: 3000 }
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - { protocol: UDP, port: 53 }
+        - { protocol: TCP, port: 53 }
+    # Postgres + Redis private endpoints (in same VNet, different IPs per env — allow all egress 5432/6380)
+    - ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 6380 }
+        - { protocol: TCP, port: 6379 }
+    # Outbound HTTPS to KV / OSV / EPSS / NVD / deps.dev / CISA
+    - ports:
+        - { protocol: TCP, port: 443 }

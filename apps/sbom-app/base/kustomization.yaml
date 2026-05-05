@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: sbom
+
+commonLabels:
+  app.kubernetes.io/name: sbom-app
+  app.kubernetes.io/part-of: sbom-vuln-analyzer
+  team: platform
+  data-classification: internal
+
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - secretproviderclass.yaml
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - httproute.yaml
+  - peerauthentication.yaml
+  - authorizationpolicy.yaml
+  - servicemonitor.yaml
+  - pdb.yaml
+  - hpa.yaml
+  - networkpolicy.yaml
+  - cronjob-kev-rescan.yaml
+
+images:
+  - name: sbom-app
+    # Harness rewrites this in the overlays; base just declares the placeholder name
+    newName: acrsbom.azurecr.io/sbom-vuln-analyzer
+    newTag: placeholder

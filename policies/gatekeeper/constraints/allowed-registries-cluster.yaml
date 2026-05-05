@@ -1,0 +1,21 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRepos
+metadata:
+  name: allowed-image-registries
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    excludedNamespaces:
+      - kube-system
+  parameters:
+    repos:
+      - "acrsbom.azurecr.io/"
+      - "mcr.microsoft.com/"
+      - "registry.k8s.io/"
+      - "quay.io/jetstack/"          # cert-manager
+      - "gcr.io/projectsigstore/"    # cosign tooling
+      - "ghcr.io/open-policy-agent/" # gatekeeper itself
+      - "docker.io/envoyproxy/"      # envoy gateway

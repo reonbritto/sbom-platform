@@ -1,0 +1,28 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: sbom-app-allow-from-gateway
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sbom-app
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces:
+              - envoy-gateway-system
+              - istio-system
+      to:
+        - operation:
+            methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"]
+    # Allow Prometheus / OpenObserve scrape from monitoring ns
+    - from:
+        - source:
+            namespaces:
+              - openobserve
+              - monitoring
+      to:
+        - operation:
+            paths: ["/api/metrics"]
+            methods: ["GET"]
