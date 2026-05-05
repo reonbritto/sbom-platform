@@ -225,6 +225,18 @@ kubectl -n argocd get pods
 #         argocd-redis, argocd-dex-server (if enabled) — all Running
 ```
 
+`argocd.reon.buzz` won't resolve yet — ExternalDNS isn't installed (it syncs in
+step 5 wave -80). To eyeball Argo CD before then, port-forward:
+
+```sh
+kubectl -n argocd port-forward svc/argocd-server 8080:80
+# Open http://localhost:8080
+# Login: admin / <password from step 4.5>
+```
+
+You can also just proceed to step 5 — the public URL starts working ~2 min after
+ExternalDNS syncs.
+
 ---
 
 ## Step 5 — Hand off to Argo CD (app-of-apps)
@@ -342,6 +354,7 @@ If the projected token file is missing, the chart's `podLabels.azure.workload.id
 | `cert-manager` Certificate stuck `Ready=False` >5 min for some other reason | DNS-01 challenge generic failure — could be RBAC, zone delegation, or transient ACME error | `kubectl -n istio-system describe challenge` — check the `Reason` field. `kubectl -n cert-manager logs -l app=cert-manager` for full context. Verify external_dns MI still has `DNS Zone Contributor` on `reon.buzz` via `az role assignment list`. |
 | Loki/Tempo/Mimir Pod `CrashLoopBackOff` with `unauthorized` from blob | WI token not mounted | `kubectl exec ... -- env | grep AZURE_` — should show client+tenant ID. If empty, pod label `azure.workload.identity/use: "true"` is missing. |
 | `argocd.reon.buzz` returns connection refused | DNS not propagated, or LB external IP not assigned | `kubectl -n istio-system get svc istio-ingressgateway` — check EXTERNAL-IP. `nslookup argocd.reon.buzz`. |
+| `argocd.reon.buzz` returns `DNS_PROBE_FINISHED_NXDOMAIN` after step 4 | Expected at this point. ExternalDNS is wave -80 in step 5; the A record doesn't exist yet. | Either run step 5 now (the natural next step) or port-forward to eyeball Argo: `kubectl -n argocd port-forward svc/argocd-server 8080:80` then http://localhost:8080. |
 | Argo CD Application stuck `OutOfSync` with `manifest generation failed` | Helm chart version no longer exists on chart repo | Check `argocd/apps/<name>.yaml` `targetRevision`; bump to a current version. |
 | Gatekeeper rejects pod with `disallowed image registry` | New component's registry not in allowlist | Edit `policies/gatekeeper/constraints/allowed-registries-cluster.yaml`, add registry, push. Argo will sync. |
 | Grafana login fails with bad credentials | `grafana-admin` Secret didn't sync from KV | `kubectl -n observability get externalsecret grafana-admin -o yaml` — look at status. Most likely: ESO MI federated credential subject doesn't match the actual SA. |
