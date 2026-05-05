@@ -4,11 +4,6 @@
 # Public LoadBalancer Service. ExternalDNS will populate reon.buzz A records
 # (and *.reon.buzz wildcards) pointing at this LB's external IP.
 
-# istio-system has istio-injection=disabled, so the proxy image won't be auto-
-# rewritten by the sidecar webhook. Set it explicitly. Bump tag in lockstep
-# with the istio-base / istiod chart version.
-image: docker.io/istio/proxyv2:1.24.1
-
 service:
   type: LoadBalancer
   # Use the AKS-managed standard LB (default). No specific IP pinned —
