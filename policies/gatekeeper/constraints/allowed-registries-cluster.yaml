@@ -32,19 +32,35 @@ spec:
       - "ghcr.io/external-secrets/"
       # ExternalDNS
       - "registry.k8s.io/external-dns/"
-      # LGTM
+      # LGTM stack — both fully-qualified and bare DockerHub forms
+      # (Gatekeeper matches the literal string in the pod spec; charts
+      # often use bare `kiwigrid/k8s-sidecar` etc. without docker.io/ prefix)
       - "docker.io/grafana/"
+      - "grafana/"
       - "docker.io/prom/"
+      - "prom/"
       - "quay.io/prometheus/"
       - "quay.io/prometheus-operator/"
       - "quay.io/kiwigrid/"
+      - "kiwigrid/"
+      - "docker.io/memcached"
+      - "memcached"
+      - "docker.io/library/memcached"
+      - "docker.io/nginxinc/"
+      - "nginxinc/"
       # OTel
       - "docker.io/otel/"
+      - "otel/"
       # Redis (Argo CD dep)
       - "docker.io/redis"
       - "docker.io/library/redis"
+      - "redis"
       # Bitnami (a few charts use this)
       - "docker.io/bitnami/"
+      - "bitnami/"
       # busybox (init containers)
       - "docker.io/library/busybox"
       - "busybox"
+      # bats/bats (Helm test pods)
+      - "docker.io/bats/"
+      - "bats/"
