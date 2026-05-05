@@ -1,28 +1,26 @@
-# Cluster-wide CRs that aren't installed by Helm:
-#   - cert-manager ClusterIssuer (Let's Encrypt staging)
-#   - Istio Gateway, PeerAuthentication, Telemetry
-#   - ESO ClusterSecretStore
+# Gatekeeper templates + constraints (pure CRs, no Helm).
+# The Gatekeeper chart itself is installed manually in bootstrap step 6,
+# but policies stay in Argo so policy edits flow through GitOps.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: platform-services
+  name: gatekeeper-policies
   namespace: argocd
   finalizers: [resources-finalizer.argocd.argoproj.io]
   annotations:
-    argocd.argoproj.io/sync-wave: "-50"
+    argocd.argoproj.io/sync-wave: "-60"
 spec:
   project: default
   source:
     repoURL: https://github.com/reonbritto/sbom-platform.git
     targetRevision: main
-    path: infra-manifests
+    path: policies/gatekeeper
     directory:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: gatekeeper-system
   syncPolicy:
     automated: { prune: true, selfHeal: true }
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
