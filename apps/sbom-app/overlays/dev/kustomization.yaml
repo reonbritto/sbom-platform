@@ -31,8 +31,8 @@ images:
   # Harness rewrites newTag on each release. Initial value is a known-bad placeholder
   # so a fresh ArgoCD sync will fail loudly until the first deploy lands a real digest.
   - name: sbom-app
-    newName: acrsbom.azurecr.io/sbom-vuln-analyzer
+    newName: docker.io/reonbritto/sbom-vuln-analyzer
     newTag: bootstrap
   - name: kev-rescan
-    newName: acrsbom.azurecr.io/kev-rescan
+    newName: docker.io/reonbritto/kev-rescan
     newTag: bootstrap

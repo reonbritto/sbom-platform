@@ -4,12 +4,11 @@
 
 ## Why
 
-<!-- Link to related work in reon/sbom or an incident -->
+<!-- Link to related work in reonbritto/sbom-analyzer or an incident -->
 
 ## Validation
 
 - [ ] `kubectl kustomize apps/sbom-app/overlays/dev | kubeconform -strict` passes
-- [ ] `kubectl kustomize apps/sbom-app/overlays/prod | kubeconform -strict` passes
 - [ ] If touching `policies/`: conftest passes
 - [ ] If touching `argocd/`: dry-run validated against ArgoCD CRD schema
 

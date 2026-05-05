@@ -17,7 +17,6 @@ jobs:
       matrix:
         overlay:
           - apps/sbom-app/overlays/dev
-          - apps/sbom-app/overlays/prod
     steps:
       - uses: actions/checkout@v4
 

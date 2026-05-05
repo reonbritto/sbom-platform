@@ -33,21 +33,10 @@ jobs:
       - name: Render dev overlay
         run: kustomize build apps/sbom-app/overlays/dev > /tmp/dev.yaml
 
-      - name: Render prod overlay
-        run: kustomize build apps/sbom-app/overlays/prod > /tmp/prod.yaml
-
       - name: Test policies against dev render
         run: |
           gator test \
             --filename policies/gatekeeper/templates \
             --filename policies/gatekeeper/constraints \
             --filename /tmp/dev.yaml \
-            --output table
-
-      - name: Test policies against prod render
-        run: |
-          gator test \
-            --filename policies/gatekeeper/templates \
-            --filename policies/gatekeeper/constraints \
-            --filename /tmp/prod.yaml \
             --output table

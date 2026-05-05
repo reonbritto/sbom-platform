@@ -8,7 +8,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/reon/sbom-platform.git
+    repoURL: https://github.com/reonbritto/sbom-platform.git
     targetRevision: main
     path: argocd/apps
     directory:

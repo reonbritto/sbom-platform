@@ -31,7 +31,6 @@ jobs:
             chart
             base
             dev
-            prod
             argocd
             policy
             infra

@@ -28,5 +28,5 @@ resources:
 images:
   - name: sbom-app
     # Harness rewrites this in the overlays; base just declares the placeholder name
-    newName: acrsbom.azurecr.io/sbom-vuln-analyzer
+    newName: docker.io/reonbritto/sbom-vuln-analyzer
     newTag: placeholder
