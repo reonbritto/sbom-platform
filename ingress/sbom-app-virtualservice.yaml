@@ -1,0 +1,18 @@
+# sbom-app is the public-facing app — exposed at the apex (reon.buzz).
+# No IP allowlist; this one is meant to be open to the world.
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: sbom-app
+  namespace: istio-system
+spec:
+  hosts:
+    - reon.buzz
+  gateways:
+    - public-gateway
+  http:
+    - route:
+        - destination:
+            host: sbom-app.sbom.svc.cluster.local
+            port:
+              number: 3000

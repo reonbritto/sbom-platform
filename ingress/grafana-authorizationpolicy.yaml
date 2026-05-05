@@ -1,0 +1,17 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: grafana-ip-allowlist
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: ingressgateway
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            remoteIpBlocks: ["37.60.98.75/32"]
+      to:
+        - operation:
+            hosts: ["grafana.reon.buzz"]

@@ -1,0 +1,36 @@
+# Promtail Helm values
+# Chart: grafana/promtail
+#
+# DaemonSet that scrapes container logs from every node and pushes to Loki.
+
+config:
+  clients:
+    - url: http://loki-gateway.observability.svc.cluster.local:80/loki/api/v1/push
+      tenant_id: "1"
+
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - labels:
+          stream: stream
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+podLabels:
+  azure.workload.identity/use: "false"
+
+serviceMonitor:
+  enabled: true
+
+# Tolerations to run on every node (including any tainted ones)
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+  - effect: NoExecute
+    operator: Exists

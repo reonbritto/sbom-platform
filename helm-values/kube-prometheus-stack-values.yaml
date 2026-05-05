@@ -1,0 +1,184 @@
+# kube-prometheus-stack Helm values
+# Chart: prometheus/kube-prometheus-stack
+#
+# Prometheus scrapes everything in-cluster and remote-writes to Mimir for
+# long-term storage. Grafana is the LGTM UI (Mimir/Loki/Tempo all read-through).
+
+fullnameOverride: kps
+
+# ─────────────────────────────────────────────────────────
+#  Prometheus
+# ─────────────────────────────────────────────────────────
+prometheus:
+  prometheusSpec:
+    replicas: 1
+    retention: 24h               # short — Mimir holds the long tail
+    retentionSize: 5GB
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+    # Pick up ServiceMonitors / PodMonitors from any namespace
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    # Remote-write to Mimir (in-cluster)
+    remoteWrite:
+      - url: http://mimir-nginx.observability.svc.cluster.local:80/api/v1/push
+        writeRelabelConfigs:
+          - sourceLabels: [__name__]
+            regex: 'go_.*|process_.*'
+            action: drop
+
+    podMetadata:
+      labels:
+        azure.workload.identity/use: "false"
+
+# ─────────────────────────────────────────────────────────
+#  Grafana
+# ─────────────────────────────────────────────────────────
+grafana:
+  enabled: true
+  replicas: 1
+
+  # Admin password is pulled from KV via ESO; the chart reads from this secret.
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+
+  # SMTP creds also pulled from KV via ESO into the same secret
+  smtp:
+    existingSecret: grafana-smtp
+    userKey: user
+    passwordKey: password
+
+  grafana.ini:
+    server:
+      domain: grafana.reon.buzz
+      root_url: https://grafana.reon.buzz
+    smtp:
+      enabled: true
+      host: smtp.gmail.com:587
+      from_address: __ALERT_FROM_EMAIL__
+      from_name: SBOM Alerts
+    auth.anonymous:
+      enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  persistence:
+    enabled: true
+    size: 5Gi
+
+  serviceMonitor:
+    enabled: true
+
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false      # Istio VirtualService handles ingress
+
+  # Datasources are in observability/grafana-datasources.yaml as a sidecar-loaded ConfigMap
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+
+# ─────────────────────────────────────────────────────────
+#  Alertmanager
+# ─────────────────────────────────────────────────────────
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi
+
+  # Wire SMTP from secret (ESO-synced)
+  config:
+    global:
+      smtp_from: __ALERT_FROM_EMAIL__
+      smtp_smarthost: smtp.gmail.com:587
+      smtp_auth_username: __ALERT_FROM_EMAIL__
+      smtp_auth_password_file: /etc/alertmanager/smtp/password
+      smtp_require_tls: true
+    route:
+      receiver: email-default
+      group_by: ['alertname', 'cluster']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+    receivers:
+      - name: email-default
+        email_configs:
+          - to: __ALERT_TO_EMAIL__
+            send_resolved: true
+
+  # Mount the SMTP password secret (synced by ESO from KV)
+  alertmanagerConfiguration:
+    name: ""
+
+# ─────────────────────────────────────────────────────────
+#  Other components
+# ─────────────────────────────────────────────────────────
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false           # AKS hides etcd
+    kubeApiserverAvailability: true
+    kubeApiserverSlos: true
+    kubeProxy: false      # AKS doesn't ship kube-proxy in standard mode by default

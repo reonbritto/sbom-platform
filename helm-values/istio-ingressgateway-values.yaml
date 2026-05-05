@@ -1,0 +1,42 @@
+# Istio Ingress Gateway Helm values
+# Chart: istio/gateway
+#
+# Public LoadBalancer Service. ExternalDNS will populate reon.buzz A records
+# (and *.reon.buzz wildcards) pointing at this LB's external IP.
+
+service:
+  type: LoadBalancer
+  # Use the AKS-managed standard LB (default). No specific IP pinned —
+  # ExternalDNS picks up whatever Azure assigns.
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "15020"
+  prometheus.io/path: /stats/prometheus

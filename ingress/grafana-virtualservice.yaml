@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: istio-system
+spec:
+  hosts:
+    - grafana.reon.buzz
+  gateways:
+    - public-gateway
+  http:
+    - route:
+        - destination:
+            host: kps-grafana.observability.svc.cluster.local
+            port:
+              number: 80

@@ -6,6 +6,7 @@ metadata:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
+    argocd.argoproj.io/sync-wave: "0"     # last — after all platform deps exist
     notifications.argoproj.io/subscribe.on-deployed.slack: "deployments-dev"
     notifications.argoproj.io/subscribe.on-health-degraded.slack: "alerts-dev"
 spec:

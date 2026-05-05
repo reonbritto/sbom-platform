@@ -12,11 +12,10 @@ commonLabels:
 resources:
   - namespace.yaml
   - serviceaccount.yaml
-  - secretproviderclass.yaml
+  - externalsecret.yaml
   - configmap.yaml
   - deployment.yaml
   - service.yaml
-  - httproute.yaml
   - peerauthentication.yaml
   - authorizationpolicy.yaml
   - servicemonitor.yaml

@@ -16,16 +16,12 @@ patches:
     target: { kind: PodDisruptionBudget, name: sbom-app }
   - path: hpa-patch.yaml
     target: { kind: HorizontalPodAutoscaler, name: sbom-app }
-  - path: httproute-patch.yaml
-    target: { kind: HTTPRoute, name: sbom-app }
   - path: env-patch.yaml
     target: { kind: Deployment, name: sbom-app }
   - path: cronjob-env-patch.yaml
     target: { kind: CronJob, name: kev-rescan }
   - path: serviceaccount-patch.yaml
     target: { kind: ServiceAccount, name: sbom-app }
-  - path: secretproviderclass-patch.yaml
-    target: { kind: SecretProviderClass, name: sbom-app-kv }
 
 images:
   # Harness rewrites newTag on each release. Initial value is a known-bad placeholder

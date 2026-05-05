@@ -1,0 +1,60 @@
+# cert-manager Helm values
+# Chart: jetstack/cert-manager
+#
+# Workload Identity is reused from the ExternalDNS managed identity (it already
+# has DNS Zone Contributor on reon.buzz, which is what cert-manager needs for
+# the DNS-01 ACME challenge). The SA below carries the same MI client-id.
+
+installCRDs: true
+
+# Enable Prometheus metrics (kube-prometheus-stack will scrape these later)
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+
+serviceAccount:
+  create: true
+  name: cert-manager
+  # Reuses the ExternalDNS MI — both need the same DNS Zone Contributor role.
+  # The federated credential on id-sbom-external-dns is bound to
+  # external-dns/external-dns-sa, so we need a SECOND federated credential for
+  # cert-manager/cert-manager — see infra-manifests/cert-manager-clusterissuer.yaml
+  # comment block. Until that's wired, leave WI off here and rely on default
+  # service principal flow during cert-manager → Azure DNS calls (cert-manager
+  # supports both).
+  annotations:
+    azure.workload.identity/client-id: "__EXTERNAL_DNS_MI_CLIENT_ID__"
+    azure.workload.identity/tenant-id: "__TENANT_ID__"
+  labels:
+    azure.workload.identity/use: "true"
+
+podLabels:
+  azure.workload.identity/use: "true"
+
+# Resource sizing — modest, dev cluster
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+webhook:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+cainjector:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

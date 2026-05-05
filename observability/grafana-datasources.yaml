@@ -1,0 +1,59 @@
+# Grafana datasources: Prometheus, Loki, Tempo, Mimir.
+# Loaded by kube-prometheus-stack via the sidecar (label `grafana_datasource: "1"`).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources-lgtm
+  namespace: observability
+  labels:
+    grafana_datasource: "1"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      # Prometheus (in-cluster, scraping)
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://kps-kube-prometheus-prometheus.observability.svc.cluster.local:9090
+        isDefault: false
+        editable: false
+
+      # Mimir (long-term metrics)
+      - name: Mimir
+        type: prometheus
+        access: proxy
+        url: http://mimir-nginx.observability.svc.cluster.local:80/prometheus
+        isDefault: true
+        editable: false
+
+      # Loki (logs)
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.observability.svc.cluster.local:80
+        editable: false
+        jsonData:
+          # Link logs → traces via traceID label
+          derivedFields:
+            - datasourceUid: tempo
+              matcherRegex: 'traceID=(\w+)'
+              name: TraceID
+              url: '$${__value.raw}'
+
+      # Tempo (traces)
+      - name: Tempo
+        type: tempo
+        access: proxy
+        uid: tempo
+        url: http://tempo-query-frontend.observability.svc.cluster.local:3100
+        editable: false
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: '-1h'
+            spanEndTimeShift: '1h'
+          tracesToMetrics:
+            datasourceUid: mimir
+          serviceMap:
+            datasourceUid: mimir

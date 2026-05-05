@@ -1,0 +1,97 @@
+# Mimir Helm values (distributed mode, Azure Blob backend)
+# Chart: grafana/mimir-distributed
+#
+# Stores long-term metrics. Prometheus remote-writes here; Grafana queries here.
+
+serviceAccount:
+  create: false
+  name: obs-sa
+
+mimir:
+  structuredConfig:
+    common:
+      storage:
+        backend: azure
+        azure:
+          account_name: __OBS_STORAGE_ACCOUNT__
+          container_name: mimir
+          endpoint_suffix: blob.core.windows.net
+          use_federated_token: true
+    blocks_storage:
+      backend: azure
+      azure:
+        account_name: __OBS_STORAGE_ACCOUNT__
+        container_name: mimir
+        endpoint_suffix: blob.core.windows.net
+        use_federated_token: true
+    alertmanager_storage:
+      backend: azure
+      azure:
+        account_name: __OBS_STORAGE_ACCOUNT__
+        container_name: mimir
+        endpoint_suffix: blob.core.windows.net
+        use_federated_token: true
+    ruler_storage:
+      backend: azure
+      azure:
+        account_name: __OBS_STORAGE_ACCOUNT__
+        container_name: mimir
+        endpoint_suffix: blob.core.windows.net
+        use_federated_token: true
+
+# Single-binary mode for dev (cheaper than full distributed)
+deploymentMode: monolithic-mode
+
+mimir-monolithic:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  persistence:
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+# Disable distributed components when running monolithic
+ingester:
+  replicas: 0
+distributor:
+  replicas: 0
+querier:
+  replicas: 0
+query_frontend:
+  replicas: 0
+query_scheduler:
+  replicas: 0
+store_gateway:
+  replicas: 0
+compactor:
+  replicas: 0
+ruler:
+  replicas: 0
+alertmanager:
+  enabled: false      # kube-prometheus-stack runs Alertmanager
+
+nginx:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+minio:
+  enabled: false      # using Azure Blob
+
+metaMonitoring:
+  serviceMonitor:
+    enabled: true
+  grafanaAgent:
+    enabled: false

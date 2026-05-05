@@ -1,0 +1,59 @@
+# ExternalDNS Helm values
+# Chart: external-dns/external-dns
+#
+# Watches Istio Gateway + VirtualService + Service objects and writes A records
+# into the reon.buzz Azure DNS zone (RG `sa`).
+
+provider:
+  name: azure
+
+sources:
+  - service
+  - ingress
+  - istio-gateway
+  - istio-virtualservice
+
+domainFilters:
+  - reon.buzz
+
+# Don't touch records ExternalDNS didn't create
+policy: sync
+registry: txt
+txtOwnerId: aks-sbom
+txtPrefix: extdns-
+
+azure:
+  tenantId: "__TENANT_ID__"
+  subscriptionId: "__SUBSCRIPTION_ID__"
+  resourceGroup: sa
+  useWorkloadIdentityExtension: true
+
+serviceAccount:
+  create: true
+  name: external-dns-sa
+  annotations:
+    azure.workload.identity/client-id: "__EXTERNAL_DNS_MI_CLIENT_ID__"
+    azure.workload.identity/tenant-id: "__TENANT_ID__"
+  labels:
+    azure.workload.identity/use: "true"
+
+podLabels:
+  azure.workload.identity/use: "true"
+
+env:
+  - name: AZURE_CLIENT_ID
+    value: "__EXTERNAL_DNS_MI_CLIENT_ID__"
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+serviceMonitor:
+  enabled: true
+
+interval: 1m
+logLevel: info

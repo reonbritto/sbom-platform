@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: prometheus
+  namespace: istio-system
+spec:
+  hosts:
+    - prometheus.reon.buzz
+  gateways:
+    - public-gateway
+  http:
+    - route:
+        - destination:
+            host: kps-kube-prometheus-prometheus.observability.svc.cluster.local
+            port:
+              number: 9090

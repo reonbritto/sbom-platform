@@ -1,0 +1,98 @@
+# Argo CD Helm values
+# Chart: argo/argo-cd
+
+global:
+  domain: argocd.reon.buzz
+
+configs:
+  params:
+    # Argo's server is behind Istio's TLS — let Argo serve plaintext internally.
+    server.insecure: true
+
+  cm:
+    # Enable Dex / OIDC later if needed; for now local admin.
+    url: https://argocd.reon.buzz
+    statusbadge.enabled: "true"
+    timeout.reconciliation: 60s
+
+  rbac:
+    # Tight default — admin only. Add policy-csv lines as you add SSO users.
+    policy.default: ""
+    policy.csv: |
+      g, admin, role:admin
+
+server:
+  replicas: 1
+  service:
+    type: ClusterIP
+  # No ingress here — Istio VirtualService in ingress/argocd-virtualservice.yaml
+  # handles external traffic.
+  ingress:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+repoServer:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+applicationSet:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi

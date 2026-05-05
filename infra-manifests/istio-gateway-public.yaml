@@ -1,0 +1,30 @@
+# Single public Istio Gateway covering reon.buzz + all subdomains.
+# VirtualServices (in ingress/) reference this gateway by name.
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: public-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "reon.buzz"
+        - "*.reon.buzz"
+      tls:
+        httpsRedirect: true
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      hosts:
+        - "reon.buzz"
+        - "*.reon.buzz"
+      tls:
+        mode: SIMPLE
+        credentialName: reon-buzz-tls   # the Secret cert-manager populates

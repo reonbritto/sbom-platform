@@ -1,0 +1,20 @@
+# Mesh-wide telemetry config:
+#   - Trace 100% of requests, ship to OTel collector (which forwards to Tempo)
+#   - Emit metrics with default Istio labels (Prometheus scrapes via ServiceMonitor)
+#   - Access logs to stdout (Promtail picks up)
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-default
+  namespace: istio-system
+spec:
+  tracing:
+    - providers:
+        - name: opentelemetry
+      randomSamplingPercentage: 100.0
+  metrics:
+    - providers:
+        - name: prometheus
+  accessLogging:
+    - providers:
+        - name: envoy

@@ -10,11 +10,41 @@ spec:
         kinds: ["Pod"]
     excludedNamespaces:
       - kube-system
+      - gatekeeper-system        # avoid bootstrap deadlock
   parameters:
     repos:
+      # Application
       - "docker.io/reonbritto/"
+      # Cluster + cert-manager
       - "registry.k8s.io/"
-      - "quay.io/jetstack/"          # cert-manager
-      - "gcr.io/projectsigstore/"    # cosign tooling
-      - "ghcr.io/open-policy-agent/" # gatekeeper itself
-      - "docker.io/envoyproxy/"      # envoy gateway
+      - "quay.io/jetstack/"
+      # cosign / Sigstore tooling
+      - "gcr.io/projectsigstore/"
+      # Gatekeeper
+      - "openpolicyagent/"
+      - "ghcr.io/open-policy-agent/"
+      # Istio
+      - "docker.io/istio/"
+      # Argo CD
+      - "quay.io/argoproj/"
+      - "ghcr.io/dexidp/"
+      # External Secrets Operator
+      - "ghcr.io/external-secrets/"
+      # ExternalDNS
+      - "registry.k8s.io/external-dns/"
+      # LGTM
+      - "docker.io/grafana/"
+      - "docker.io/prom/"
+      - "quay.io/prometheus/"
+      - "quay.io/prometheus-operator/"
+      - "quay.io/kiwigrid/"
+      # OTel
+      - "docker.io/otel/"
+      # Redis (Argo CD dep)
+      - "docker.io/redis"
+      - "docker.io/library/redis"
+      # Bitnami (a few charts use this)
+      - "docker.io/bitnami/"
+      # busybox (init containers)
+      - "docker.io/library/busybox"
+      - "busybox"

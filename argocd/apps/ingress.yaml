@@ -1,28 +1,24 @@
-# Cluster-wide CRs that aren't installed by Helm:
-#   - cert-manager ClusterIssuer (Let's Encrypt staging)
-#   - Istio Gateway, PeerAuthentication, Telemetry
-#   - ESO ClusterSecretStore
+# Per-host VirtualServices + AuthorizationPolicies (IP allowlist for UIs)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: platform-services
+  name: ingress
   namespace: argocd
   finalizers: [resources-finalizer.argocd.argoproj.io]
   annotations:
-    argocd.argoproj.io/sync-wave: "-50"
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   project: default
   source:
     repoURL: https://github.com/reonbritto/sbom-platform.git
     targetRevision: main
-    path: infra-manifests
+    path: ingress
     directory:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: istio-system
   syncPolicy:
     automated: { prune: true, selfHeal: true }
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true

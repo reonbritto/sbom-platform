@@ -1,0 +1,16 @@
+# Mesh-wide STRICT mTLS. All pod-to-pod traffic inside the mesh is encrypted
+# and authenticated via Istio sidecars. Pods OUTSIDE the mesh (no sidecar) can't
+# talk to pods inside the mesh — that's deliberate.
+#
+# Namespaces that opt INTO the mesh (`istio-injection=enabled`):
+#   - argocd, sbom, observability, external-secrets, external-dns, gatekeeper-system
+# Namespaces that opt OUT (no sidecar):
+#   - kube-system, istio-system, cert-manager
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT

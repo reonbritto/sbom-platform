@@ -1,0 +1,118 @@
+# Tempo Helm values (distributed mode, Azure Blob backend)
+# Chart: grafana/tempo-distributed
+
+# Reuse the SA created by Loki. DO NOT set serviceAccount.create: true here
+# (Loki already created it; two charts both creating obs-sa would conflict).
+serviceAccount:
+  create: false
+  name: obs-sa
+
+storage:
+  trace:
+    backend: azure
+    azure:
+      container_name: tempo
+      storage_account_name: __OBS_STORAGE_ACCOUNT__
+      use_federated_token: true
+
+  admin:
+    backend: azure
+    azure:
+      container_name: tempo
+      storage_account_name: __OBS_STORAGE_ACCOUNT__
+      use_federated_token: true
+
+# Components
+ingester:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+distributor:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  config:
+    log_received_spans:
+      enabled: false
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      zipkin:
+        endpoint: 0.0.0.0:9411
+
+querier:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+queryFrontend:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+compactor:
+  replicas: 1
+  podLabels:
+    azure.workload.identity/use: "true"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+memcached:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+metaMonitoring:
+  serviceMonitor:
+    enabled: true
+
+# Disable internal Grafana, Prometheus etc — kube-prometheus-stack handles it
+metricsGenerator:
+  enabled: false

@@ -1,26 +1,27 @@
-# Cluster-wide CRs that aren't installed by Helm:
-#   - cert-manager ClusterIssuer (Let's Encrypt staging)
-#   - Istio Gateway, PeerAuthentication, Telemetry
-#   - ESO ClusterSecretStore
+# Glue manifests for the observability stack:
+#   - ESO ExternalSecret for Grafana admin (KV → grafana-admin Secret)
+#   - ESO ExternalSecret for Grafana SMTP (KV → grafana-smtp Secret)
+#   - ESO ExternalSecret for Alertmanager SMTP password (KV → alertmanager-smtp Secret)
+#   - Grafana datasources ConfigMap (Loki, Tempo, Mimir)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: platform-services
+  name: observability-config
   namespace: argocd
   finalizers: [resources-finalizer.argocd.argoproj.io]
   annotations:
-    argocd.argoproj.io/sync-wave: "-50"
+    argocd.argoproj.io/sync-wave: "-15"
 spec:
   project: default
   source:
     repoURL: https://github.com/reonbritto/sbom-platform.git
     targetRevision: main
-    path: infra-manifests
+    path: observability
     directory:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: observability
   syncPolicy:
     automated: { prune: true, selfHeal: true }
     syncOptions:

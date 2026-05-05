@@ -1,0 +1,45 @@
+# Istiod Helm values
+# Chart: istio/istiod
+
+global:
+  meshID: sbom-mesh
+  multiCluster:
+    clusterName: aks-sbom
+  network: aks-sbom-network
+
+  # Enable telemetry v2 (in-proc, low overhead)
+  proxy:
+    holdApplicationUntilProxyStarts: true
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+pilot:
+  autoscaleEnabled: false
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  # Trace + metric exporters wired to OTel collector (deployed later via Argo)
+  traceSampling: 1.0
+
+meshConfig:
+  enableTracing: true
+  defaultConfig:
+    tracing:
+      sampling: 100.0
+      zipkin:
+        address: opentelemetry-collector.observability.svc.cluster.local:9411
+  # Send Envoy access logs to stdout (Promtail picks them up)
+  accessLogFile: /dev/stdout
+  accessLogFormat: |
+    [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%" %RESPONSE_CODE% %RESPONSE_FLAGS% "%DYNAMIC_METADATA(istio.mixer:status)%" "%UPSTREAM_TRANSPORT_FAILURE_REASON%" %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%" "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%" "%UPSTREAM_HOST%" %UPSTREAM_CLUSTER% %UPSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_LOCAL_ADDRESS% %DOWNSTREAM_REMOTE_ADDRESS% %REQUESTED_SERVER_NAME% %ROUTE_NAME%

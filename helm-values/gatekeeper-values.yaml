@@ -1,0 +1,36 @@
+# OPA Gatekeeper Helm values
+# Chart: gatekeeper/gatekeeper
+
+replicas: 1
+
+# Enable audit + admission
+audit:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+controllerManager:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+
+# Allow controllers in kube-system to bypass admission so we don't deadlock the cluster.
+validatingWebhookFailurePolicy: Ignore
+mutatingWebhookFailurePolicy: Ignore
+
+postInstall:
+  labelNamespace:
+    enabled: false
+
+# Constraint templates + Constraints in this repo are applied by Argo CD as a
+# separate sync wave (see argocd/apps/gatekeeper-policies.yaml).

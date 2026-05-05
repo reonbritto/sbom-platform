@@ -1,0 +1,108 @@
+# OpenTelemetry Collector Helm values
+# Chart: open-telemetry/opentelemetry-collector
+#
+# Receives traces from apps and from Istio (zipkin), forwards them to Tempo.
+# Receives logs from Promtail, forwards to Loki.
+# Receives metrics from anything that pushes OTLP, forwards to Mimir.
+
+mode: deployment
+replicaCount: 1
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+# We don't need WI on the collector — it talks to Loki/Tempo/Mimir over
+# in-cluster HTTP, no Azure-side auth required.
+podLabels:
+  azure.workload.identity/use: "false"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    protocol: TCP
+  zipkin:
+    enabled: true
+    containerPort: 9411
+    servicePort: 9411
+    protocol: TCP
+  metrics:
+    enabled: true
+    containerPort: 8888
+    servicePort: 8888
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    zipkin:
+      endpoint: 0.0.0.0:9411
+    prometheus:
+      config:
+        scrape_configs:
+          - job_name: otel-collector
+            scrape_interval: 30s
+            static_configs:
+              - targets: ['0.0.0.0:8888']
+
+  processors:
+    batch:
+      timeout: 1s
+      send_batch_size: 1024
+    memory_limiter:
+      check_interval: 1s
+      limit_percentage: 75
+      spike_limit_percentage: 25
+
+  exporters:
+    # Traces → Tempo (in-cluster)
+    otlp/tempo:
+      endpoint: tempo-distributor.observability.svc.cluster.local:4317
+      tls:
+        insecure: true
+
+    # Metrics → Mimir (Prometheus remote-write protocol)
+    prometheusremotewrite/mimir:
+      endpoint: http://mimir-nginx.observability.svc.cluster.local:80/api/v1/push
+      tls:
+        insecure: true
+
+    # Logs → Loki (loki exporter)
+    loki:
+      endpoint: http://loki-gateway.observability.svc.cluster.local:80/loki/api/v1/push
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp, zipkin]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/tempo]
+      metrics:
+        receivers: [otlp, prometheus]
+        processors: [memory_limiter, batch]
+        exporters: [prometheusremotewrite/mimir]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [loki]
+
+serviceMonitor:
+  enabled: true
