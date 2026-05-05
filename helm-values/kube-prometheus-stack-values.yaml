@@ -74,7 +74,7 @@ grafana:
     smtp:
       enabled: true
       host: smtp.gmail.com:587
-      from_address: __ALERT_FROM_EMAIL__
+      from_address: reonbritto@gmail.com
       from_name: SBOM Alerts
     auth.anonymous:
       enabled: false
@@ -135,9 +135,9 @@ alertmanager:
   # Wire SMTP from secret (ESO-synced)
   config:
     global:
-      smtp_from: __ALERT_FROM_EMAIL__
+      smtp_from: reonbritto@gmail.com
       smtp_smarthost: smtp.gmail.com:587
-      smtp_auth_username: __ALERT_FROM_EMAIL__
+      smtp_auth_username: reonbritto@gmail.com
       smtp_auth_password_file: /etc/alertmanager/smtp/password
       smtp_require_tls: true
     route:
@@ -149,7 +149,7 @@ alertmanager:
     receivers:
       - name: email-default
         email_configs:
-          - to: __ALERT_TO_EMAIL__
+          - to: reonbritto@gmail.com
             send_resolved: true
 
   # Mount the SMTP password secret (synced by ESO from KV)

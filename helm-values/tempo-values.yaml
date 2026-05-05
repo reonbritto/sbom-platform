@@ -12,14 +12,14 @@ storage:
     backend: azure
     azure:
       container_name: tempo
-      storage_account_name: __OBS_STORAGE_ACCOUNT__
+      storage_account_name: stsbomobsr4tm8a
       use_federated_token: true
 
   admin:
     backend: azure
     azure:
       container_name: tempo
-      storage_account_name: __OBS_STORAGE_ACCOUNT__
+      storage_account_name: stsbomobsr4tm8a
       use_federated_token: true
 
 # Components

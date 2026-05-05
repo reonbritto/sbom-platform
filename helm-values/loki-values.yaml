@@ -27,7 +27,7 @@ loki:
       ruler: loki
       admin: loki
     azure:
-      accountName: __OBS_STORAGE_ACCOUNT__
+      accountName: stsbomobsr4tm8a
       containerName: loki
       endpointSuffix: blob.core.windows.net
       useFederatedToken: true
@@ -48,8 +48,8 @@ serviceAccount:
   create: true
   name: obs-sa
   annotations:
-    azure.workload.identity/client-id: "__OBS_MI_CLIENT_ID__"
-    azure.workload.identity/tenant-id: "__TENANT_ID__"
+    azure.workload.identity/client-id: "b32805f9-f8b8-4b93-993f-2b3f83e936c8"
+    azure.workload.identity/tenant-id: "d1d16433-e375-4076-a7ea-c57bb79df0de"
   labels:
     azure.workload.identity/use: "true"
 

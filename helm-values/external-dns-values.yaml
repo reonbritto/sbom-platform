@@ -23,8 +23,8 @@ txtOwnerId: aks-sbom
 txtPrefix: extdns-
 
 azure:
-  tenantId: "__TENANT_ID__"
-  subscriptionId: "__SUBSCRIPTION_ID__"
+  tenantId: "d1d16433-e375-4076-a7ea-c57bb79df0de"
+  subscriptionId: "dfed6615-05cd-434d-b0e0-7dea9e050738"
   resourceGroup: sa
   useWorkloadIdentityExtension: true
 
@@ -32,8 +32,8 @@ serviceAccount:
   create: true
   name: external-dns-sa
   annotations:
-    azure.workload.identity/client-id: "__EXTERNAL_DNS_MI_CLIENT_ID__"
-    azure.workload.identity/tenant-id: "__TENANT_ID__"
+    azure.workload.identity/client-id: "4aed8159-86ef-4f44-a872-d5ce34fb9578"
+    azure.workload.identity/tenant-id: "d1d16433-e375-4076-a7ea-c57bb79df0de"
   labels:
     azure.workload.identity/use: "true"
 
@@ -42,7 +42,7 @@ podLabels:
 
 env:
   - name: AZURE_CLIENT_ID
-    value: "__EXTERNAL_DNS_MI_CLIENT_ID__"
+    value: "4aed8159-86ef-4f44-a872-d5ce34fb9578"
 
 resources:
   requests:

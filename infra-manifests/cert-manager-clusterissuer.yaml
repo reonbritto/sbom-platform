@@ -12,18 +12,18 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: __ALERT_FROM_EMAIL__
+    email: reonbritto@gmail.com
     privateKeySecretRef:
       name: letsencrypt-staging-account-key
     solvers:
       - dns01:
           azureDNS:
-            subscriptionID: __SUBSCRIPTION_ID__
+            subscriptionID: dfed6615-05cd-434d-b0e0-7dea9e050738
             resourceGroupName: sa
             hostedZoneName: reon.buzz
-            tenantID: __TENANT_ID__
+            tenantID: d1d16433-e375-4076-a7ea-c57bb79df0de
             managedIdentity:
-              clientID: __EXTERNAL_DNS_MI_CLIENT_ID__
+              clientID: 4aed8159-86ef-4f44-a872-d5ce34fb9578
         selector:
           dnsZones:
             - reon.buzz

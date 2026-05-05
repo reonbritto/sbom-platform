@@ -13,28 +13,28 @@ mimir:
       storage:
         backend: azure
         azure:
-          account_name: __OBS_STORAGE_ACCOUNT__
+          account_name: stsbomobsr4tm8a
           container_name: mimir
           endpoint_suffix: blob.core.windows.net
           use_federated_token: true
     blocks_storage:
       backend: azure
       azure:
-        account_name: __OBS_STORAGE_ACCOUNT__
+        account_name: stsbomobsr4tm8a
         container_name: mimir
         endpoint_suffix: blob.core.windows.net
         use_federated_token: true
     alertmanager_storage:
       backend: azure
       azure:
-        account_name: __OBS_STORAGE_ACCOUNT__
+        account_name: stsbomobsr4tm8a
         container_name: mimir
         endpoint_suffix: blob.core.windows.net
         use_federated_token: true
     ruler_storage:
       backend: azure
       azure:
-        account_name: __OBS_STORAGE_ACCOUNT__
+        account_name: stsbomobsr4tm8a
         container_name: mimir
         endpoint_suffix: blob.core.windows.net
         use_federated_token: true
