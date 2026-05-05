@@ -275,11 +275,10 @@ helm upgrade --install argocd argo/argo-cd \
 kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
 ```
 
-Expose the UI via Istio + IP allowlist:
+Expose the UI via Istio (publicly — no IP allowlist):
 
 ```sh
 kubectl apply -f ingress/argocd-virtualservice.yaml
-kubectl apply -f ingress/argocd-authorizationpolicy.yaml
 ```
 
 Get the initial admin password:
@@ -290,7 +289,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 echo
 ```
 
-Save it. Login at `https://argocd.reon.buzz` (only from `37.60.98.75/32` per the AuthorizationPolicy) once DNS + cert finish propagating. Username `admin`. **Rotate immediately via the UI.**
+Save it. Login at `https://argocd.reon.buzz` once DNS + cert finish propagating. Username `admin`. **Rotate immediately via the UI** — the UI is public.
 
 If `argocd.reon.buzz` doesn't resolve yet:
 - ExternalDNS may not have written the per-host A record yet (it writes one once Argo CD applies the per-host VirtualServices in step 8). Until then, only `reon.buzz` apex resolves.
@@ -358,7 +357,7 @@ nslookup grafana.reon.buzz
 
 ### Argo CD UI
 
-Open `https://argocd.reon.buzz` from `37.60.98.75`. Login `admin` / step-7 password. **Rotate the password.**
+Open `https://argocd.reon.buzz`. Login `admin` / step-7 password. **Rotate the password.**
 
 ### Grafana
 
