@@ -1,0 +1,22 @@
+# Wildcard cert for reon.buzz + *.reon.buzz.
+# References the letsencrypt-staging ClusterIssuer (cert-manager-clusterissuer.yaml).
+# The Istio public-gateway (istio-gateway-public.yaml) reads the resulting
+# `reon-buzz-tls` Secret in istio-system for TLS termination.
+#
+# Apply order matters: this file requires the `istio-system` namespace, which
+# is created in bootstrap step 3.1. So this is applied AFTER step 3.1, not in
+# step 2 with the ClusterIssuer.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: reon-buzz-wildcard
+  namespace: istio-system
+spec:
+  secretName: reon-buzz-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: reon.buzz
+  dnsNames:
+    - reon.buzz
+    - "*.reon.buzz"

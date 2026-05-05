@@ -67,7 +67,9 @@ helm upgrade --install cert-manager jetstack/cert-manager \
 kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=180s
 ```
 
-### 2.3 Apply the ClusterIssuer + wildcard Certificate
+### 2.3 Apply the ClusterIssuer
+
+(The wildcard `Certificate` lives in `istio-system`, which doesn't exist yet — applied in step 3.7.)
 
 ```sh
 kubectl apply -f infra-manifests/cert-manager-clusterissuer.yaml
@@ -81,10 +83,6 @@ kubectl -n cert-manager get pods
 
 kubectl get clusterissuer
 # Expect: letsencrypt-staging   READY=True
-
-kubectl -n istio-system get certificate reon-buzz-wildcard
-# (Will be Ready=False until Istio is up + LB IP is assigned + DNS-01 challenge passes.
-#  Don't worry about it now — comes back to it after step 4.)
 ```
 
 ---
@@ -138,12 +136,13 @@ kubectl -n istio-system get svc istio-ingressgateway -w
 # Note the IP — ExternalDNS will write it into reon.buzz A records.
 ```
 
-### 3.6 Apply the Gateway + mTLS + Telemetry CRs
+### 3.6 Apply the Gateway + mTLS + Telemetry CRs + wildcard Certificate
 
 ```sh
 kubectl apply -f infra-manifests/istio-peerauthentication-strict.yaml
 kubectl apply -f infra-manifests/istio-gateway-public.yaml
 kubectl apply -f infra-manifests/istio-telemetry.yaml
+kubectl apply -f infra-manifests/reon-buzz-wildcard-cert.yaml
 ```
 
 ### 3.7 Verify
@@ -155,6 +154,11 @@ kubectl -n istio-system get pods
 kubectl -n istio-system get gateway public-gateway
 kubectl -n istio-system get peerauthentication default
 kubectl -n istio-system get telemetry mesh-default
+
+kubectl -n istio-system get certificate reon-buzz-wildcard
+# READY will flip to True once cert-manager completes the DNS-01 challenge
+# (creates a TXT record under reon.buzz, waits for Let's Encrypt to verify).
+# Takes 30–120 seconds. If it stays False past 5 min, see the failure-modes table.
 ```
 
 ---
@@ -319,6 +323,8 @@ If the projected token file is missing, the chart's `podLabels.azure.workload.id
 | Symptom | Most likely cause | First check |
 |---|---|---|
 | `helm install` errors with `no matches for kind "ServiceMonitor" in version "monitoring.coreos.com/v1"` | The chart's values try to create a ServiceMonitor before the kube-prometheus-stack CRDs exist | Set `serviceMonitor.enabled: false` (or `prometheus.servicemonitor.enabled: false` for cert-manager) in that chart's values file. Re-enable later, after kube-prom-stack syncs in step 5. cert-manager / ESO / ExternalDNS already pre-disabled in this repo for that reason. |
+| `kubectl apply` of ClusterIssuer fails with `managed identity can not be used at the same time as clientID, clientSecretSecretRef or tenantID` | cert-manager's webhook enforces mutually-exclusive auth modes for `azureDNS` solvers | When using `managedIdentity.clientID`, do NOT also set `tenantID`/`clientID`/`clientSecretSecretRef` under `azureDNS`. Already pre-fixed in `infra-manifests/cert-manager-clusterissuer.yaml`. |
+| `kubectl apply` of `reon-buzz-wildcard-cert.yaml` fails with `namespaces "istio-system" not found` | Order-of-apply: the Certificate targets `istio-system`, which is created in step 3.1 | Apply in step 3.6, not step 2. The runbook reflects this; if you ran step 2.3 from an older revision, just re-run after step 3.1. |
 | `cert-manager` Certificate stuck `Ready=False` >5 min | DNS-01 challenge can't auth to Azure DNS | `kubectl -n cert-manager logs -l app=cert-manager` — look for `AADSTS` errors. Verify external_dns MI has DNS Zone Contributor on `reon.buzz`. |
 | Loki/Tempo/Mimir Pod `CrashLoopBackOff` with `unauthorized` from blob | WI token not mounted | `kubectl exec ... -- env | grep AZURE_` — should show client+tenant ID. If empty, pod label `azure.workload.identity/use: "true"` is missing. |
 | `argocd.reon.buzz` returns connection refused | DNS not propagated, or LB external IP not assigned | `kubectl -n istio-system get svc istio-ingressgateway` — check EXTERNAL-IP. `nslookup argocd.reon.buzz`. |

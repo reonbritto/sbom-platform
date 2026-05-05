@@ -1,10 +1,13 @@
 # Let's Encrypt STAGING ClusterIssuer.
 # DNS-01 challenge against Azure DNS (reon.buzz, RG `sa`).
-# Reuses the ExternalDNS managed identity (already has DNS Zone Contributor).
+# Uses the ExternalDNS managed identity (already has DNS Zone Contributor).
 #
-# To flip to PROD later: change the server URL + privateKeySecretRef name
-# in this file, then delete the existing reon-buzz-tls Secret in istio-system
-# so cert-manager re-issues.
+# IMPORTANT: when using `managedIdentity`, do NOT also set tenantID, clientID,
+# or clientSecretSecretRef. The webhook rejects mixing the two auth modes.
+#
+# To flip to PROD later: change the server URL + privateKeySecretRef name,
+# then delete the existing reon-buzz-tls Secret in istio-system so cert-manager
+# re-issues from the prod ACME endpoint.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -21,26 +24,8 @@ spec:
             subscriptionID: dfed6615-05cd-434d-b0e0-7dea9e050738
             resourceGroupName: sa
             hostedZoneName: reon.buzz
-            tenantID: d1d16433-e375-4076-a7ea-c57bb79df0de
             managedIdentity:
               clientID: 4aed8159-86ef-4f44-a872-d5ce34fb9578
         selector:
           dnsZones:
             - reon.buzz
----
-# Wildcard cert for reon.buzz + *.reon.buzz issued at boot. The Istio Gateway
-# (infra-manifests/istio-gateway-public.yaml) references this secret.
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: reon-buzz-wildcard
-  namespace: istio-system
-spec:
-  secretName: reon-buzz-tls
-  issuerRef:
-    name: letsencrypt-staging
-    kind: ClusterIssuer
-  commonName: reon.buzz
-  dnsNames:
-    - reon.buzz
-    - "*.reon.buzz"
