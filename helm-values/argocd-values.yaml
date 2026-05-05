@@ -15,11 +15,11 @@ configs:
     statusbadge.enabled: "true"
     timeout.reconciliation: 60s
 
-  rbac:
-    # Tight default — admin only. Add policy-csv lines as you add SSO users.
-    policy.default: ""
-    policy.csv: |
-      g, admin, role:admin
+  # No custom rbac block. Argo's built-in `admin` local user is unconditionally
+  # cluster-admin out of the box. Add `policy.csv` only when you wire up SSO
+  # and need to grant roles to OIDC groups — setting `policy.default: ""` here
+  # without a working group mapping locks YOU out (the local admin user falls
+  # under the empty default, not under any `g, ...` group binding).
 
 server:
   replicas: 1
