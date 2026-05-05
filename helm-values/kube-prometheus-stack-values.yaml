@@ -7,6 +7,21 @@
 fullnameOverride: kps
 
 # ─────────────────────────────────────────────────────────
+#  Prometheus Operator — admission webhook patch jobs
+# ─────────────────────────────────────────────────────────
+# The chart ships pre-install + post-install Helm hook Jobs that patch the
+# operator's admission webhook secret. In an Istio-injected namespace (we
+# label observability with istio-injection=enabled), these Job pods get a
+# sidecar; the main container exits but istio-proxy keeps running, so the
+# Job never reports Completed and Argo CD's sync hangs on the hook.
+# Disable injection on the patch Job pods specifically.
+prometheusOperator:
+  admissionWebhooks:
+    patch:
+      podAnnotations:
+        sidecar.istio.io/inject: "false"
+
+# ─────────────────────────────────────────────────────────
 #  Prometheus
 # ─────────────────────────────────────────────────────────
 prometheus:
